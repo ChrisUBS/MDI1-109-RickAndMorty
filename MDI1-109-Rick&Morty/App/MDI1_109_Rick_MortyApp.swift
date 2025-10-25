@@ -11,7 +11,7 @@ import SwiftUI
 struct MDI1_109_Rick_MortyApp: App {
     var body: some Scene {
         WindowGroup {
-            CharactersView()
+            MainView()
                 .preferredColorScheme(.dark)
         }
     }

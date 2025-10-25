@@ -7,34 +7,41 @@
 
 import Foundation
 
-struct APIClient {
-    let baseURL = URL(string: "https://rickandmortyapi.com/api")!
+enum APIResource: String {
+    case characters = "character"
+    case episodes = "episode"
+    case locations = "location"
+}
+
+final class APIClient {
+    static let shared = APIClient()
+    private init() {}
     
-    /// Generic GET returning raw Data after status check
-    func get(_ path: String, query: [URLQueryItem]? = nil) async throws -> Data {
-        var comps = URLComponents(url: baseURL.appendingPathComponent(path), resolvingAgainstBaseURL: false)!
-        comps.queryItems = query
-        let url = comps.url!
+    private let baseURL = "https://rickandmortyapi.com/api"
+    
+    func fetch<T: Codable>(
+        resource: APIResource,
+        page: Int,
+        query: String = ""
+    ) async throws -> APIResponse<T> {
+        var components = URLComponents(string: "\(baseURL)/\(resource.rawValue)")
+        var queryItems = [URLQueryItem(name: "page", value: "\(page)")]
         
-        let (data, resp) = try await URLSession.shared.data(from: url)
-        guard let http = resp as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+        if !query.isEmpty {
+            queryItems.append(URLQueryItem(name: "name", value: query))
+        }
+        
+        components?.queryItems = queryItems
+        guard let url = components?.url else {
+            throw URLError(.badURL)
+        }
+        
+        let (data, response) = try await URLSession.shared.data(from: url)
+        
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
             throw URLError(.badServerResponse)
         }
-        return data
-    }
-    
-    /// Decode /character into CharactersResponse (with Info + [RMCharacter])
-    func fetchCharacters(page: Int?, name: String?) async throws -> CharactersResponse {
-        var items: [URLQueryItem] = []
-        if let page = page {
-            items.append(URLQueryItem(name: "page", value: String(page)))
-        }
-        if let name = name, !name.isEmpty {
-            items.append(URLQueryItem(name: "name", value: name))
-        }
         
-        let data = try await get("character", query: items.isEmpty ? nil : items)
-        let dec = JSONDecoder()
-        return try dec.decode(CharactersResponse.self, from: data)
+        return try JSONDecoder().decode(APIResponse<T>.self, from: data)
     }
 }

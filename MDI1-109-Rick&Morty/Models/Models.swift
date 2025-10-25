@@ -27,3 +27,33 @@ public struct RMCharacter: Codable, Identifiable, Hashable {
     public let image: String
     public let episode: [String]  // episode URLs
 }
+
+public struct LocationsResponse: Codable, Hashable {
+    public let info: Info
+    public let results: [Location]
+}
+
+public struct Location: Codable, Identifiable, Hashable {
+    public let id: Int
+    public let name: String
+    public let type: String
+    public let dimension: String
+    public let residents: [String]
+    public let url: String
+    public let created: String
+}
+
+public struct EpisodesResponse: Codable, Hashable {
+    public let info: Info
+    public let results: [Episode]
+}
+
+public struct Episode: Codable, Identifiable, Hashable {
+    public let id: Int
+    public let name: String
+    public let air_date: String
+    public let episode: String
+    public let characters: [String]
+    public let url: String
+    public let created: String
+}
